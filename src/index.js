@@ -7,12 +7,40 @@ import * as store from './store'
 import * as utils from './utils/AltUtils'
 import makeAction from './actions'
 
+class QueuedDispatcher extends Dispatcher {
+  constructor() {
+    super()
+    this._queue = []
+  }
+
+  dispatch(...args) {
+    // Avoid "Cannot dispatch in the middle of a dispatch error."
+    if (this.isDispatching() || this._queue.length) {
+      this._queue.push(() => {
+        super.dispatch(...args)
+      })
+    } else {
+      super.dispatch(...args)
+    }
+  }
+
+  _stopDispatching() {
+    super._stopDispatching()
+
+    // Just call task once at a time
+    if (this._queue.length) {
+      const task = this._queue.shift()
+      task()
+    }
+  }
+}
+
 class Alt {
   constructor(config = {}) {
     this.config = config
     this.serialize = config.serialize || JSON.stringify
     this.deserialize = config.deserialize || JSON.parse
-    this.dispatcher = config.dispatcher || new Dispatcher()
+    this.dispatcher = config.dispatcher || new QueuedDispatcher()
     this.batchingFunction = config.batchingFunction || (callback => callback())
     this.actions = { global: {} }
     this.stores = {}

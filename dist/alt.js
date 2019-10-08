@@ -52,14 +52,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -93,23 +93,77 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* global window */
 
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } } /* global window */
 
+	var QueuedDispatcher = function (_Dispatcher) {
+	  _inherits(QueuedDispatcher, _Dispatcher);
+
+	  function QueuedDispatcher() {
+	    _classCallCheck(this, QueuedDispatcher);
+
+	    var _this = _possibleConstructorReturn(this, _Dispatcher.call(this));
+
+	    _this._queue = [];
+	    return _this;
+	  }
+
+	  QueuedDispatcher.prototype.dispatch = function () {
+	    function dispatch() {
+	      var _this2 = this;
+
+	      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	        args[_key] = arguments[_key];
+	      }
+
+	      // Avoid "Cannot dispatch in the middle of a dispatch error."
+	      if (this.isDispatching() || this._queue.length) {
+	        this._queue.push(function () {
+	          var _Dispatcher$prototype;
+
+	          (_Dispatcher$prototype = _Dispatcher.prototype.dispatch).call.apply(_Dispatcher$prototype, [_this2].concat(args));
+	        });
+	      } else {
+	        var _Dispatcher$prototype2;
+
+	        (_Dispatcher$prototype2 = _Dispatcher.prototype.dispatch).call.apply(_Dispatcher$prototype2, [this].concat(args));
+	      }
+	    }
+
+	    return dispatch;
+	  }();
+
+	  QueuedDispatcher.prototype._stopDispatching = function () {
+	    function _stopDispatching() {
+	      _Dispatcher.prototype._stopDispatching.call(this);
+
+	      // Just call task once at a time
+	      if (this._queue.length) {
+	        var task = this._queue.shift();
+	        task();
+	      }
+	    }
+
+	    return _stopDispatching;
+	  }();
+
+	  return QueuedDispatcher;
+	}(_flux.Dispatcher);
 
 	var Alt = function () {
 	  function Alt() {
-	    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 	    _classCallCheck(this, Alt);
 
 	    this.config = config;
 	    this.serialize = config.serialize || JSON.stringify;
 	    this.deserialize = config.deserialize || JSON.parse;
-	    this.dispatcher = config.dispatcher || new _flux.Dispatcher();
+	    this.dispatcher = config.dispatcher || new QueuedDispatcher();
 	    this.batchingFunction = config.batchingFunction || function (callback) {
 	      return callback();
 	    };
@@ -124,7 +178,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  Alt.prototype.dispatch = function () {
 	    function dispatch(action, data, details) {
-	      var _this = this;
+	      var _this3 = this;
 
 	      this.batchingFunction(function () {
 	        var id = Math.random().toString(18).substr(2, 16);
@@ -136,14 +190,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            namespace: action.type,
 	            name: action.type
 	          };
-	          return _this.dispatcher.dispatch(utils.fsa(id, action.type, action.payload, fsaDetails));
+	          return _this3.dispatcher.dispatch(utils.fsa(id, action.type, action.payload, fsaDetails));
 	        }
 
 	        if (action.id && action.dispatch) {
-	          return utils.dispatch(id, action, data, _this);
+	          return utils.dispatch(id, action, data, _this3);
 	        }
 
-	        return _this.dispatcher.dispatch(utils.fsa(id, action, data, details));
+	        return _this3.dispatcher.dispatch(utils.fsa(id, action, data, details));
 	      });
 	    }
 
@@ -156,8 +210,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      store.createStoreConfig(this.config, StoreModel);
 	      var Store = store.transformStore(this.storeTransforms, StoreModel);
 
-	      for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	        args[_key - 1] = arguments[_key];
+	      for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+	        args[_key2 - 1] = arguments[_key2];
 	      }
 
 	      return fn.isFunction(Store) ? store.createStoreFromClass.apply(store, [this, Store, key].concat(args)) : store.createStoreFromObject(this, Store, key);
@@ -185,8 +239,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key = utils.uid(this.stores, key);
 	      }
 
-	      for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-	        args[_key2 - 2] = arguments[_key2];
+	      for (var _len3 = arguments.length, args = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+	        args[_key3 - 2] = arguments[_key3];
 	      }
 
 	      var storeInstance = fn.isFunction(Store) ? store.createStoreFromClass.apply(store, [this, Store, key].concat(args)) : store.createStoreFromObject(this, Store, key);
@@ -204,8 +258,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function generateActions() {
 	      var actions = { name: 'global' };
 
-	      for (var _len3 = arguments.length, actionNames = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-	        actionNames[_key3] = arguments[_key3];
+	      for (var _len4 = arguments.length, actionNames = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+	        actionNames[_key4] = arguments[_key4];
 	      }
 
 	      return this.createActions(actionNames.reduce(function (obj, action) {
@@ -227,9 +281,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  Alt.prototype.createActions = function () {
 	    function createActions(ActionsClass) {
-	      var _this3 = this;
+	      var _this5 = this;
 
-	      var exportObj = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	      var exportObj = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
 	      var actions = {};
 	      var key = utils.uid(this._actionsRegistry, ActionsClass.displayName || ActionsClass.name || 'Unknown');
@@ -243,8 +297,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          function ActionsGenerator() {
 	            _classCallCheck(this, ActionsGenerator);
 
-	            for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-	              args[_key5] = arguments[_key5];
+	            for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+	              args[_key6] = arguments[_key6];
 	            }
 
 	            return _possibleConstructorReturn(this, _ActionsClass.call.apply(_ActionsClass, [this].concat(args)));
@@ -252,8 +306,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          ActionsGenerator.prototype.generateActions = function () {
 	            function generateActions() {
-	              for (var _len6 = arguments.length, actionNames = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-	                actionNames[_key6] = arguments[_key6];
+	              for (var _len7 = arguments.length, actionNames = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+	                actionNames[_key7] = arguments[_key7];
 	              }
 
 	              actionNames.forEach(function (actionName) {
@@ -267,8 +321,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return ActionsGenerator;
 	        }(ActionsClass);
 
-	        for (var _len4 = arguments.length, argsForConstructor = Array(_len4 > 2 ? _len4 - 2 : 0), _key4 = 2; _key4 < _len4; _key4++) {
-	          argsForConstructor[_key4 - 2] = arguments[_key4];
+	        for (var _len5 = arguments.length, argsForConstructor = Array(_len5 > 2 ? _len5 - 2 : 0), _key5 = 2; _key5 < _len5; _key5++) {
+	          argsForConstructor[_key5 - 2] = arguments[_key5];
 	        }
 
 	        fn.assign(actions, new (Function.prototype.bind.apply(ActionsGenerator, [null].concat(argsForConstructor)))());
@@ -285,7 +339,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        // create the action
-	        exportObj[actionName] = (0, _actions2['default'])(_this3, key, actionName, action, exportObj);
+	        exportObj[actionName] = (0, _actions2['default'])(_this5, key, actionName, action, exportObj);
 
 	        // generate a constant
 	        var constant = utils.formatAsConstant(actionName);
@@ -300,8 +354,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  Alt.prototype.takeSnapshot = function () {
 	    function takeSnapshot() {
-	      for (var _len7 = arguments.length, storeNames = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-	        storeNames[_key7] = arguments[_key7];
+	      for (var _len8 = arguments.length, storeNames = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+	        storeNames[_key8] = arguments[_key8];
 	      }
 
 	      var state = StateFunctions.snapshot(this, storeNames);
@@ -325,8 +379,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  Alt.prototype.recycle = function () {
 	    function recycle() {
-	      for (var _len8 = arguments.length, storeNames = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-	        storeNames[_key8] = arguments[_key8];
+	      for (var _len9 = arguments.length, storeNames = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+	        storeNames[_key9] = arguments[_key9];
 	      }
 
 	      var initialSnapshot = storeNames.length ? StateFunctions.filterSnapshots(this, this._initSnapshot, storeNames) : this._initSnapshot;
@@ -378,8 +432,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  Alt.prototype.addActions = function () {
 	    function addActions(name, ActionsClass) {
-	      for (var _len9 = arguments.length, args = Array(_len9 > 2 ? _len9 - 2 : 0), _key9 = 2; _key9 < _len9; _key9++) {
-	        args[_key9 - 2] = arguments[_key9];
+	      for (var _len10 = arguments.length, args = Array(_len10 > 2 ? _len10 - 2 : 0), _key10 = 2; _key10 < _len10; _key10++) {
+	        args[_key10 - 2] = arguments[_key10];
 	      }
 
 	      this.actions[name] = Array.isArray(ActionsClass) ? this.generateActions.apply(this, ActionsClass) : this.createActions.apply(this, [ActionsClass].concat(args));
@@ -390,8 +444,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  Alt.prototype.addStore = function () {
 	    function addStore(name, StoreModel) {
-	      for (var _len10 = arguments.length, args = Array(_len10 > 2 ? _len10 - 2 : 0), _key10 = 2; _key10 < _len10; _key10++) {
-	        args[_key10 - 2] = arguments[_key10];
+	      for (var _len11 = arguments.length, args = Array(_len11 > 2 ? _len11 - 2 : 0), _key11 = 2; _key11 < _len11; _key11++) {
+	        args[_key11 - 2] = arguments[_key11];
 	      }
 
 	      this.createStore.apply(this, [StoreModel, name].concat(args));
@@ -439,9 +493,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports['default'] = Alt;
 	module.exports = exports['default'];
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Copyright (c) 2014-2015, Facebook, Inc.
@@ -455,9 +509,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports.Dispatcher = __webpack_require__(3);
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
 	 * Copyright (c) 2014-2015, Facebook, Inc.
@@ -692,9 +746,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Dispatcher;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// shim for using process in browser
 	var process = module.exports = {};
@@ -866,6 +920,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
+	process.prependListener = noop;
+	process.prependOnceListener = noop;
+
+	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -878,9 +936,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	process.umask = function() { return 0; };
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
 	 * Copyright 2013-2015, Facebook, Inc.
@@ -933,9 +991,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = invariant;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -958,27 +1016,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	  fn.eachObject(function (key, value) {
 	    var store = instance.stores[key];
 	    if (store) {
-	      (function () {
-	        var config = store.StoreModel.config;
+	      var config = store.StoreModel.config;
 
-	        var state = store.state;
-	        if (config.onDeserialize) obj[key] = config.onDeserialize(value) || value;
-	        if (fn.isMutableObject(state)) {
-	          fn.eachObject(function (k) {
-	            return delete state[k];
-	          }, [state]);
-	          fn.assign(state, obj[key]);
-	        } else {
-	          store.state = obj[key];
-	        }
-	        onStore(store, store.state);
-	      })();
+	      var state = store.state;
+	      if (config.onDeserialize) obj[key] = config.onDeserialize(value) || value;
+	      if (fn.isMutableObject(state)) {
+	        fn.eachObject(function (k) {
+	          return delete state[k];
+	        }, [state]);
+	        fn.assign(state, obj[key]);
+	      } else {
+	        store.state = obj[key];
+	      }
+	      onStore(store, store.state);
 	    }
 	  }, [obj]);
 	}
 
 	function snapshot(instance) {
-	  var storeNames = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+	  var storeNames = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 
 	  var stores = storeNames.length ? storeNames : Object.keys(instance.stores);
 	  return stores.reduce(function (obj, storeHandle) {
@@ -1010,9 +1066,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {});
 	}
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -1051,9 +1107,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return target;
 	}
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1268,9 +1324,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return storeInstance;
 	}
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1314,7 +1370,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function getPrototypeChain(Obj) {
-	  var methods = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	  var methods = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
 	  return Obj === Function.prototype ? methods : getPrototypeChain(Object.getPrototypeOf(Obj), fn.assign(getInternalMethods(Obj, true), methods));
 	}
@@ -1390,9 +1446,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* istanbul ignore next */
 	function NoopClass() {}
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1496,7 +1552,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (model.reduce) {
 	        handleDispatch(function () {
 	          var value = model.reduce(_this.state, payload);
-	          if (value !== undefined) _this.state = value;
+	          if (value !== undefined) _this.state = model.state = value;
 	        }, payload);
 	        if (!_this.preventDefault) _this.emitChange();
 	      }
@@ -1516,9 +1572,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      if (!fn.isFunction(cb)) throw new TypeError('listen expects a function');
 
-	      var _transmitter$subscrib = this.transmitter.subscribe(cb);
-
-	      var dispose = _transmitter$subscrib.dispose;
+	      var _transmitter$subscrib = this.transmitter.subscribe(cb),
+	          dispose = _transmitter$subscrib.dispose;
 
 	      this.subscriptions.push({ cb: cb, dispose: dispose });
 	      return function () {
@@ -1533,10 +1588,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  AltStore.prototype.unlisten = function () {
 	    function unlisten(cb) {
 	      this.lifecycle('unlisten');
-	      this.subscriptions.filter(function (subscription) {
-	        return subscription.cb === cb;
-	      }).forEach(function (subscription) {
-	        return subscription.dispose();
+	      this.subscriptions = this.subscriptions.filter(function (subscription) {
+	        if (subscription.cb === cb) {
+	          subscription.dispose();
+	          return false;
+	        }
+	        return true;
 	      });
 	    }
 
@@ -1557,9 +1614,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports['default'] = AltStore;
 	module.exports = exports['default'];
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 
@@ -1614,9 +1671,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = transmitter;
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1856,9 +1913,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports['default'] = StoreMixin;
 	module.exports = exports['default'];
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1903,17 +1960,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var actionResult = invocationResult;
 
 	    // async functions that return promises should not be dispatched
-	    if (invocationResult !== undefined && !(0, _isPromise2['default'])(invocationResult)) {
-	      if (fn.isFunction(invocationResult)) {
+	    if (invocationResult !== undefined) {
+	      // Automated call dispatch inside a promise returned
+	      if ((0, _isPromise2['default'])(invocationResult)) {
+	        actionResult = invocationResult.then(function (result) {
+	          dispatch(result);
+	          return result;
+	        });
+	      } else if (fn.isFunction(invocationResult)) {
 	        // inner function result should be returned as an action result
 	        actionResult = invocationResult(dispatch, alt);
 	      } else {
 	        dispatch(invocationResult);
 	      }
-	    }
-
-	    if (invocationResult === undefined) {
-	      utils.warn('An action was called but nothing was dispatched');
+	    } else {
+	      dispatch(invocationResult);
 	    }
 
 	    return actionResult;
@@ -1943,9 +2004,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	module.exports = exports['default'];
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = isPromise;
 
@@ -1954,7 +2015,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;

@@ -38,9 +38,16 @@ export default {
       alt.recycle(store)
     },
 
-    'are not dispatched automatically'() {
+    'are not dispatched immediately with a promise'() {
       actions.fetch()
       assert(store.state.dispatched === false, 'async action is not automatically dispatched')
+    },
+
+    'dispatched automatically with a promise'() {
+      actions.fetch().then(result => {
+        assert(result === 'foo', 'return value correctly')
+        assert(store.state.dispatched === true, 'async action is automatically dispatched')
+      })
     },
 
     'return the result of inner function invocation'() {

@@ -3,8 +3,8 @@ import Alt from '../'
 import React from 'react'
 import { assert } from 'chai'
 import sinon from 'sinon'
-import TestUtils from 'react-addons-test-utils'
 import ReactDom from 'react-dom'
+import ReactTestRenderer from 'react-test-renderer'
 
 // TOOD action was called but not dispatched?
 const Actions = {
@@ -12,6 +12,7 @@ const Actions = {
     setTimeout(() => {
       this.switchComponent()
     }, 10)
+    return null
   },
 
   switchComponent() {
@@ -20,7 +21,7 @@ const Actions = {
 
   uhoh() {
     return null
-  }
+  },
 }
 
 function Store(actions) {
@@ -38,7 +39,7 @@ class ComponentA extends React.Component {
     this.state = props.alt.stores.store.getState()
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.props.alt.stores.store.listen(state => this.setState(state))
   }
 
@@ -52,7 +53,7 @@ class ComponentA extends React.Component {
 }
 
 class ComponentB extends React.Component {
-  componentWillMount() {
+  componentDidMount() {
     let error = null
     try {
       this.props.alt.actions.actions.uhoh()
@@ -86,11 +87,11 @@ export default {
       alt.addStore('store', Store, alt.actions.actions)
 
       function test(err) {
-        assert.match(err, /dispatch in the middle of a dispatch/)
+        assert.isNull(err)
         done()
       }
 
-      TestUtils.renderIntoDocument(<ComponentA alt={alt} callback={test} />)
+      ReactTestRenderer.create(<ComponentA alt={alt} callback={test} />)
       alt.actions.actions.buttonClick()
     },
 
@@ -104,8 +105,8 @@ export default {
         done()
       }
 
-      TestUtils.renderIntoDocument(<ComponentA alt={alt} callback={test} />)
+      ReactTestRenderer.create(<ComponentA alt={alt} callback={test} />)
       alt.actions.actions.buttonClick()
     },
-  }
+  },
 }

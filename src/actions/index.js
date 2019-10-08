@@ -16,17 +16,21 @@ export default function makeAction(alt, namespace, name, implementation, obj) {
     let actionResult = invocationResult
 
     // async functions that return promises should not be dispatched
-    if (invocationResult !== undefined && !isPromise(invocationResult)) {
-      if (fn.isFunction(invocationResult)) {
+    if (invocationResult !== undefined) {
+      // Automated call dispatch inside a promise returned
+      if (isPromise(invocationResult)) {
+        actionResult = invocationResult.then(result => {
+          dispatch(result)
+          return result
+        })
+      } else if (fn.isFunction(invocationResult)) {
         // inner function result should be returned as an action result
         actionResult = invocationResult(dispatch, alt)
       } else {
         dispatch(invocationResult)
       }
-    }
-
-    if (invocationResult === undefined) {
-      utils.warn('An action was called but nothing was dispatched')
+    } else {
+      dispatch(invocationResult)
     }
 
     return actionResult
